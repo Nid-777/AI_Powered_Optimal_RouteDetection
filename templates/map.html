@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Route Map with Heatmap</title>
+  <style>
+    #map { height: 100%; width: 100%; min-height: 500px; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+  </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ AIzaSyCYx6wIdf6eI2hkXx4BqasGiOmWhpS0_6g }}&libraries=visualization"></script>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    let map, directionsService, directionsRenderer, heatmap;
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 6,
+        center: { lat: 23.5, lng: 84.0 }
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+      new google.maps.TrafficLayer().setMap(map);
+
+      // Dummy default route (replace via Streamlit component injection if needed)
+      const request = {
+        origin: "Durgapur, India",
+        destination: "Delhi, India",
+        travelMode: 'DRIVING',
+        provideRouteAlternatives: true,
+        drivingOptions: { departureTime: new Date() }
+      };
+
+      directionsService.route(request, function(result, status) {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(result);
+        }
+      });
+
+      heatmap = new google.maps.visualization.HeatmapLayer({
+        data: [],
+        map: map
+      });
+    }
+
+    window.onload = initMap;
+  </script>
+</body>
+</html>
