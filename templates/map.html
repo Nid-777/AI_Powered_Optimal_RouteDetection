@@ -6,11 +6,7 @@
     #map { height: 100%; width: 100%; min-height: 500px; }
     html, body { height: 100%; margin: 0; padding: 0; }
   </style>
-  with open("templates/map.html") as f:
-    template = Template(f.read())
-    html_content = template.render(api_key="YOUR_GOOGLE_MAPS_API_KEY")  # this passes the key
-    st.components.v1.html(html_content, height=600)
-
+  <script src="https://maps.googleapis.com/maps/api/js?key={{"YOUR_GOOGLE_MAPS_API_KEY"}}&libraries=visualization"></script>
 </head>
 <body>
   <div id="map"></div>

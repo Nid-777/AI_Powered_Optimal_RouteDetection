@@ -22,6 +22,7 @@ def get_routes(origin, destination, mode):
     response = requests.get(url, params=params)
     return response.json()
 
+
 # Function to estimate fuel consumption
 def estimate_fuel(distance_km, mileage):
     return distance_km / mileage
