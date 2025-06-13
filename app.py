@@ -2,9 +2,11 @@ import streamlit as st
 import requests
 import json
 from jinja2 import Template
+import os
+from dotenv import load_dotenv
 
-# Your Google Maps API Key
-API_KEY = "YOUR_GOOGLE_MAPS_API_KEY"
+load_dotenv()
+API_KEY = os.getenv("YOUR_GOOGLE_MAPS_API_KEY")
 
 # Function to get all routes using Google Maps Directions API
 def get_routes(origin, destination, mode):
@@ -44,6 +46,7 @@ if st.button("Compute Optimal Route"):
     else:
         heat_pts = []
         scores = []
+        route_links = []
         st.markdown("---")
         st.subheader("Available Routes")
 
@@ -60,7 +63,13 @@ if st.button("Compute Optimal Route"):
             score = distance_km + cost / 10
             scores.append((i, score))
 
+            # Generate dynamic route map link for each route
+            polyline = route["overview_polyline"]["points"]
+            route_url = f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&travelmode={mode}"
+            route_links.append(route_url)
+
             st.markdown(f"### Route {i+1}")
+            st.write(f"📍 [Open in Google Maps]({route_url})")
             st.write(f"📏 Distance: **{distance_km:.2f} km**")
             st.write(f"⏱️ Duration (with traffic): **{duration}**")
             st.write(f"⛽ Estimated Fuel Used: **{fuel_used:.2f} litres**")
@@ -70,19 +79,17 @@ if st.button("Compute Optimal Route"):
         best_route_index = min(scores, key=lambda x: x[1])[0]
         st.success(f"✅ Optimal Route: Route {best_route_index + 1}")
 
-        # Display map
+        # Display map using HTML template
         with open("templates/map.html") as f:
             template = Template(f.read())
-            html_content = template.render(api_key=API_KEY)
+            html_content = template.render(api_key=API_KEY, origin=origin, destination=destination, mode=mode)
             st.components.v1.html(html_content, height=600)
 
-        # Send heat points and route data to JS
+        # JS data dump if needed for other components
         js_data = {
             "origin": origin,
             "destination": destination,
             "mode": mode,
             "heat_points": heat_pts
         }
-
-        # For browser-based communication (if needed later)
         st.json(js_data)

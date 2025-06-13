@@ -6,14 +6,32 @@
     #map { height: 100%; width: 100%; min-height: 500px; }
     html, body { height: 100%; margin: 0; padding: 0; }
   </style>
-  
+  with open("templates/map.html") as f:
+    template = Template(f.read())
+    html_content = template.render(api_key="YOUR_GOOGLE_MAPS_API_KEY")  # this passes the key
+    st.components.v1.html(html_content, height=600)
+
 </head>
 <body>
   <div id="map"></div>
   <script>
     let map, directionsService, directionsRenderer, heatmap;
 
-    function initMap() {
+    async function getStreamlitData() {
+      // Fetch Streamlit-sent JSON
+      const res = await fetch("http://localhost:8501/stream");  // This gets overridden by Streamlit
+      const dataTag = parent.document.querySelector('streamlit-data');
+      return JSON.parse(dataTag?.textContent || '{}');
+    }
+
+    async function initMap() {
+      const data = await getStreamlitData();
+
+      const origin = data.origin || "Durgapur, India";
+      const destination = data.destination || "Delhi, India";
+      const mode = (data.mode || "driving").toUpperCase();
+      const heatPoints = (data.heat_points || []).map(pt => new google.maps.LatLng(pt.lat, pt.lng));
+
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 6,
         center: { lat: 23.5, lng: 84.0 }
@@ -23,11 +41,10 @@
       directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
       new google.maps.TrafficLayer().setMap(map);
 
-      // Dummy default route (replace via Streamlit component injection if needed)
       const request = {
-        origin: "Durgapur, India",
-        destination: "Delhi, India",
-        travelMode: 'DRIVING',
+        origin: origin,
+        destination: destination,
+        travelMode: mode,
         provideRouteAlternatives: true,
         drivingOptions: { departureTime: new Date() }
       };
@@ -35,11 +52,15 @@
       directionsService.route(request, function(result, status) {
         if (status === 'OK') {
           directionsRenderer.setDirections(result);
+        } else {
+          alert("Failed to load directions: " + status);
         }
       });
 
       heatmap = new google.maps.visualization.HeatmapLayer({
-        data: [],
+        data: heatPoints,
+        radius: 20,
+        dissipating: true,
         map: map
       });
     }
